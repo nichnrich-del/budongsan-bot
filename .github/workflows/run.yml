@@ -1,0 +1,34 @@
+name: budongsan check
+
+on:
+  schedule:
+    - cron: "0 0 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: install
+        run: pip install -r requirements.txt
+      - name: run collector
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python collector.py
+      - name: save results
+        run: |
+          git config user.name "budongsan-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add seen.json docs/ || true
+          git commit -m "auto update" || echo "no change"
+          git push || echo "push skipped"
